@@ -12,11 +12,7 @@ files = [x for x in base_dir.glob('**/*.flac') if x.is_file()]  # get list of fl
 construct = lambda s, e: ["ffmpeg", "-loglevel", "error", "-i", base_dir / s, "-ab", "320k", end_dir / f"{e}.mp3"]
 
 
-def sortfunc(a):
-    return os.path.getsize(base_dir / a)
-
-
-files.sort(key=sortfunc, reverse=True)
+files.sort(key = lambda a: os.path.getsize(base_dir / a), reverse=True)
 
 
 def convert(file):
@@ -37,8 +33,7 @@ def worker(item):
 threads = []
 # Start a pool of worker threads
 for task in files:
-    t = threading.Thread(target=worker, args=(task, ))
-    t.daemon = True
+    t = threading.Thread(target=worker, args=(task, ), daemon=True)
     t.start()
     threads.append(t)
 
@@ -49,4 +44,4 @@ print(f'Number of active threads: {th}')
 for t in threads:
     t.join()
 
-print(f'Files processed: {th}')
+print(f'Files processed: {th - 1}')
