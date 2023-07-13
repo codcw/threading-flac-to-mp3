@@ -18,17 +18,17 @@ files.sort(key = lambda a: os.path.getsize(base_dir / a), reverse=True)
 def convert(file):
     args = construct(file.name, file.stem)
     res = subprocess.run(args)
-    if res:
-        print(file.name, " processed")
+    with threading.Lock():
+        if res:
+            print(file.name, " processed")
 
 
-# Define a function that will be run in separate threads
+# Function that will be run in separate threads
 def worker(item):
     if item is None:
         th = threading.active_count()
         return print(f'Number of active threads: {th}')
     convert(item)
-
 
 threads = []
 # Start a pool of worker threads
