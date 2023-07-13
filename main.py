@@ -6,13 +6,20 @@ import subprocess, pathlib, os, threading
 import tkinter as tk
 from tkinter.filedialog import askdirectory
 tk.Tk().withdraw()  # part of the import if you are not using other tkinter functions
-base_dir = pathlib.Path(askdirectory())     # ask for directory with files to convert
-end_dir = pathlib.Path(askdirectory())      # ask for target directory for converted files
+# ask for directory with files to convert
+base_dir = pathlib.Path(askdirectory(title = 'Pick Input(.flac) Folder'))
+# ask for target directory for converted files
+end_dir = pathlib.Path(askdirectory(title = 'Pick Output(.mp3) Folder'))
 files = [x for x in base_dir.glob('**/*.flac') if x.is_file()]  # get list of flac files in directory
-construct = lambda s, e: ["ffmpeg", "-loglevel", "error", "-i", base_dir / s, "-ab", "320k", end_dir / f"{e}.mp3"]
+def construct_ffmpeg_query(s, e):
+    return ["ffmpeg",
+            "-loglevel", "error",   # logging
+            "-i", base_dir / s,     # input
+            "-ab", "320k",          # converting tags
+            end_dir / f"{e}.mp3"]   # output
 
 
-files.sort(key = lambda a: os.path.getsize(base_dir / a), reverse=True)
+files.sort(key = lambda a: os.path.getsize(base_dir / a), reverse = True)
 
 
 def convert(file):
@@ -33,7 +40,9 @@ def worker(item):
 threads = []
 # Start a pool of worker threads
 for task in files:
-    t = threading.Thread(target=worker, args=(task, ), daemon=True)
+    t = threading.Thread(target = worker,
+                         args = (task, ),
+                         daemon = True)
     t.start()
     threads.append(t)
 
