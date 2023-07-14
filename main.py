@@ -27,20 +27,24 @@ def construct_queries(flac_files):
 files.sort(key = lambda a: os.path.getsize(base_dir / a), reverse = True)
 
 # worker function
-def convert(args, file_name):
-    res = subprocess.run(args)
+def convert(ffmpeg_args, file_name):
+    res = subprocess.run(ffmpeg_args,
+                         stdout =
+                         stderr = subprocess.STDOUT,
+                         text = True)
     with threading.Lock():
-        if res:
-            converted_files_count += 1
-            print("CONVERTED: ", file_name)
+        if res.stdout != None:
+            print(f"Error in {file_name}: ")
+            print(res.stdout)
         else:
-            failed_files.append(file_name)
-            print("ERROR: ", file_name)
+            print("Converted: ", file_name)
+    if res.stdout != None:
+        failed_files.append(file_name)
+
 
 
 threads = []
 failed_files = []
-converted_files_count = 0
 # Start a pool of worker threads
 for args in construct_queries(files):
     t = threading.Thread(target = convert,
@@ -56,8 +60,8 @@ print("Number of active threads: ", threading.active_count())
 for thread in threads:
     thread.join()
 
-print("Files converted: ", converted_files_count)
-if failed_files:
-    print("Files failed: ", len(failed_files))
-    for failed_file in failed_files:
-        print("Failed - ", failed_file)
+print("Files converted: ", len(threads) - len(failed_files))
+if len(failed_files) > 0:
+    print(f"Files failed({len(failed_files)}): ")
+    for file in failed_files:
+        print(file)
