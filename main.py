@@ -28,40 +28,24 @@ files.sort(key = lambda a: os.path.getsize(base_dir / a), reverse = True)
 
 # worker function
 def convert(ffmpeg_args, file_name):
-    res = subprocess.run(ffmpeg_args,
-                         stdout =
-                         stderr = subprocess.STDOUT,
-                         text = True)
-    with threading.Lock():
-        if res.stdout != None:
-            print(f"Error in {file_name}: ")
-            print(res.stdout)
-        else:
-            print("Converted: ", file_name)
-    if res.stdout != None:
-        failed_files.append(file_name)
-
+    res = subprocess.run(ffmpeg_args, input = 'N', text = True)
+    with lock:
+        print("Finished: ", file_name)
 
 
 threads = []
-failed_files = []
 # Start a pool of worker threads
+lock = threading.Lock()
+print(f"Input directory:\t\"{base_dir}\"")
+print(f"Output directory:\t\"{end_dir}\"")
 for args in construct_queries(files):
     t = threading.Thread(target = convert,
                          args = args)
     t.start()
     threads.append(t)
 
-print(f"Input directory:\t\"{base_dir}\"")
-print(f"Output directory:\t\"{end_dir}\"")
-print("Number of active threads: ", threading.active_count())
-
 # Wait for all the jobs to finish
 for thread in threads:
     thread.join()
 
-print("Files converted: ", len(threads) - len(failed_files))
-if len(failed_files) > 0:
-    print(f"Files failed({len(failed_files)}): ")
-    for file in failed_files:
-        print(file)
+print("Total: ", len(threads))
